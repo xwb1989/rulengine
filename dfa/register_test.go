@@ -1,9 +1,10 @@
 package dfa
 
 import (
+	"testing"
+
 	. "github.com/smartystreets/goconvey/convey"
 	. "github.com/xwb1989/quickdecider/parser"
-	"testing"
 )
 
 func TestRegisterBasic(t *testing.T) {
@@ -16,8 +17,8 @@ func TestRegisterBasic(t *testing.T) {
 		Convey("should be able to put a new and simple state", func() {
 			ret := reg.GetOrPut(states[0])
 			So(ret, ShouldEqual, ret)
-			pred := MakePredicate("")
-			act := MakeAction("")
+			pred := MakePredicate("", nil)
+			act := MakeAction("", nil)
 			Convey("should be able to put a different state", func() {
 				states[2].SetNext(pred, states[0]) //same as state 2
 				ret := reg.GetOrPut(states[2])
@@ -43,7 +44,7 @@ func TestRegisterBasic(t *testing.T) {
 					})
 					Convey("however removing a state that has not in register and has no equivalent should fail", func() {
 						states[4].SetNext(pred, states[0])
-						states[4].SetAction(act) //same edge but with different action
+						states[4].Action = act //same edge but with different action
 						So(reg.Remove(states[4]), ShouldBeFalse)
 						So(reg.Size(), ShouldEqual, 2)
 						Convey("and we should be able to put it into register", func() {

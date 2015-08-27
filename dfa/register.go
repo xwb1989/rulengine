@@ -5,38 +5,39 @@ type Register struct {
 	size   int
 }
 
-//Hash state, find its equivalent, or register it
-func (reg *Register) GetOrPut(state *State) *State {
+//Hash state, find its equivalent, or selfister it
+func (self *Register) GetOrPut(state *State) *State {
 	key := state.Hash()
-	states, ok := reg.states[key]
+	states, ok := self.states[key]
 	if ok {
 		for _, other := range states {
 			if state.Equals(other) {
 				return other
 			}
 		}
-		reg.states[key] = append(states, state)
+		self.states[key] = append(states, state)
 	} else {
-		reg.states[key] = []*State{state}
+		self.states[key] = []*State{state}
 	}
-	state.Register()
-	reg.size += 1
+	self.size += 1
 	return state
 }
 
-func (reg *Register) Size() int {
-	return reg.size
+func (self *Register) Size() int {
+	return self.size
 }
 
-func (reg *Register) Remove(state *State) bool {
+func (self *Register) Remove(state *State) bool {
 	key := state.Hash()
-	states, ok := reg.states[key]
+	states, ok := self.states[key]
 	if ok {
 		for i, other := range states {
 			if state.Equals(other) {
-				reg.states[key] = deleteFromSlice(states, i)
-				reg.size--
-				state.UnRegister()
+				self.states[key] = deleteFromSlice(states, i)
+				self.size--
+				if len(self.states[key]) == 0 {
+					delete(self.states, key)
+				}
 				return true
 			}
 		}

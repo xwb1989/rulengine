@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"hash/fnv"
+)
+
 type PredicateFunc func(interface{}) bool
 type ActionFunc func(interface{}) interface{}
 
@@ -8,11 +12,32 @@ type exprBase struct {
 	expr string
 }
 
-func (expr *exprBase) Hash() uint64 {
-	return expr.id
+type Node interface {
+	Hash() uint64
+	String() string
 }
-func (expr *exprBase) String() string {
-	return expr.expr
+
+func (self *exprBase) String() string {
+	return self.expr
+}
+
+func (self *exprBase) Hash() uint64 {
+	return self.id
+}
+
+func (self *exprBase) Equals(other Node) bool {
+	if self == other {
+		return true
+	} else if self == nil || other == nil {
+		return false
+	}
+	return self.Hash() == other.Hash() && self.String() == other.String()
+}
+
+func MakeExprBase(expr string) exprBase {
+	h := fnv.New64a()
+	h.Write([]byte(expr))
+	return exprBase{id: h.Sum64(), expr: expr}
 }
 
 type Predicate struct {
@@ -20,13 +45,12 @@ type Predicate struct {
 	functor PredicateFunc
 }
 
-func MakePredicate(expr string) *Predicate {
-	//hash expr to get id, parse expr to get functor
-	return &Predicate{exprBase: exprBase{id: 0, expr: expr}, functor: nil}
+func MakePredicate(expr string, functor PredicateFunc) *Predicate {
+	return &Predicate{exprBase: MakeExprBase(expr), functor: functor}
 }
 
-func (pred *Predicate) IsTrue(val interface{}) bool {
-	return pred.functor(val)
+func (self *Predicate) IsTrue(data interface{}) bool {
+	return self.functor(data)
 }
 
 type Action struct {
@@ -34,11 +58,19 @@ type Action struct {
 	functor ActionFunc
 }
 
-func MakeAction(expr string) *Action {
-	//hash expr to get id, parse expr to get functor
-	return &Action{exprBase: exprBase{id: 0, expr: expr}, functor: nil}
+func MakeAction(expr string, functor ActionFunc) *Action {
+	return &Action{exprBase: MakeExprBase(expr), functor: functor}
 }
 
-func (pred *Action) Apply(val interface{}) interface{} {
-	return pred.functor(val)
+func (self *Action) Apply(val interface{}) interface{} {
+	return self.functor(val)
+}
+
+type Rule struct {
+	Predicates []*Predicate
+	Action     *Action
+}
+
+func MakeRule(preds []*Predicate, act *Action) *Rule {
+	return &Rule{Predicates: preds, Action: act}
 }
