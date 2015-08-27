@@ -21,8 +21,8 @@ func TestDFA(t *testing.T) {
 				res := act.Apply(w).(string)
 				So(res, ShouldEqual, "accept")
 			}
-			fmt.Println("dfa size:", dfa.Size())
-
+			//rand is deterministic thus we can always expect same size
+			So(dfa.Size(), ShouldEqual, 6055)
 		})
 		Convey("make sure we can generate minimal DFA...", func() {
 			Convey("we have luka...", func() {
@@ -66,6 +66,26 @@ func TestDFA(t *testing.T) {
 	})
 }
 
+func BenchmarkMakeDFA(b *testing.B) {
+	words := squareTable(10000, 10)
+	rules := WordsToRules(words, false)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		MakeDFA(rules)
+	}
+}
+
+func BenchmarkGetAction(b *testing.B) {
+	words := squareTable(10000, 10)
+	rules := WordsToRules(words, false)
+	dfa := MakeDFA(rules)
+	word := words[rand.Int31n(10000)]
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		dfa.GetAction(word)
+	}
+}
+
 func WordsToRules(words []string, isMin bool) []*Rule {
 	rules := make([]*Rule, len(words))
 	for i, word := range words {
@@ -77,7 +97,7 @@ func WordsToRules(words []string, isMin bool) []*Rule {
 var pred_map map[string]*Predicate = make(map[string]*Predicate)
 var act_map map[string]*Action = make(map[string]*Action)
 
-//a little parser
+//a tiny parser
 func wordToRule(w string, isMin bool) *Rule {
 	preds := []*Predicate{}
 	for i := 0; i < len(w); i++ {
