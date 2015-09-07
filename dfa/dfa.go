@@ -3,7 +3,7 @@ package dfa
 import (
 	"fmt"
 	"github.com/oleiade/lane"
-	. "github.com/xwb1989/quickdecider/parser"
+	. "github.com/xwb1989/rulengine/parser"
 	"log"
 )
 

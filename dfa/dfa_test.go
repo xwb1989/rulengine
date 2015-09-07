@@ -5,7 +5,7 @@ import (
 
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/xwb1989/quickdecider/parser"
+	. "github.com/xwb1989/rulengine/parser"
 	"math/rand"
 )
 

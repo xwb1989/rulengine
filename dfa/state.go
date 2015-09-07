@@ -1,7 +1,7 @@
 package dfa
 
 import (
-	. "github.com/xwb1989/quickdecider/parser"
+	. "github.com/xwb1989/rulengine/parser"
 	"math"
 )
 

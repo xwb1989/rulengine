@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/xwb1989/quickdecider/parser"
+	. "github.com/xwb1989/rulengine/parser"
 )
 
 func TestRegisterBasic(t *testing.T) {
