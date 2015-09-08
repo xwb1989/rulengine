@@ -1,6 +1,6 @@
 #Rulengine
 
-This is a toy project in which I tried to incorporate/experiment tools and ideas I'm interested...
+This is a toy project in which I try to incorporate/experiment tools and ideas I'm interested in...
 
 It has:
 
