@@ -1,7 +1,5 @@
 #Rulengine
 
-##Author: Wenbin Xiao
-
 This is a toy project in which I tried to incorporate/experiment tools and ideas I'm interested...
 
 It has:
