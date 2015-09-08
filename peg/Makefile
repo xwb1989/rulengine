@@ -5,3 +5,6 @@ default:
 clean:
 	rm -rf parser.peg.go
 
+.PHONY: bench
+bench:
+	go test -bench=. -run=XXX

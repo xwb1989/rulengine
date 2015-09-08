@@ -74,3 +74,28 @@ type Rule struct {
 func MakeRule(preds []*Predicate, act *Action) *Rule {
 	return &Rule{Predicates: preds, Action: act}
 }
+
+func lt(a int, b int) bool {
+	return a < b
+}
+
+func le(a int, b int) bool {
+	return a <= b
+}
+
+func eq(a interface{}, b interface{}) bool {
+	return a == b
+}
+
+/**
+we have lazy evaluation...
+*/
+type BoolFn func() bool
+
+func and(a BoolFn, b BoolFn) bool {
+	return a() && b()
+}
+
+func or(a BoolFn, b BoolFn) bool {
+	return a() || b()
+}

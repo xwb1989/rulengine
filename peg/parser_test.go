@@ -6,7 +6,7 @@ import (
 )
 
 func TestBasic(t *testing.T) {
-	expr := "(1 - -3) / 3 + 2 *(3 + -4) +3 % 2 ^ 2"
+	expr := "1+2+3"
 	calc := &Calculator{Buffer: expr}
 	calc.Init()
 	calc.Expression.Init(expr)
@@ -19,7 +19,7 @@ func TestBasic(t *testing.T) {
 
 func BenchmarkParse(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		expr := "(1 - -3) / 3 + 2 *(3 + -4) +3 % 2 ^ 2"
+		expr := "1+2+3"
 		calc := &Calculator{Buffer: expr}
 		calc.Init()
 		calc.Expression.Init(expr)
