@@ -1,13 +1,10 @@
 %{
 package parser
+
 import "bytes"
 
-func SetParseTree(yylex interface{}, stmt Statement) {
-  yylex.(*Lexer).ParseTree = stmt
-}
-
-func SetAllowComments(yylex interface{}, allow bool) {
-  yylex.(*Lexer).AllowComments = allow
+func SetParseTree(yylex interface{}, rule *Rule) {
+  yylex.(*Lexer).ParseTree = rule
 }
 
 func ForceEOF(yylex interface{}) {
@@ -18,36 +15,47 @@ func ForceEOF(yylex interface{}) {
 %}
 
 %union {
-  rule          *Rule
-  pred          *Predicate
-  preds         []pred
-  act           *Action
-  str           string
-  f             float64
+  empty         struct{}
+  Rul           *Rule
+  Pred          *Predicate
+  Preds         []*Predicate
+  Act           *Action
+  Str           string
+  Number        float64
 }
 /*
 Tokens include: number, &&, ->, identifier, >, <, >=, <=, ==, =
 */
-%token LEX_ERROR
-%token THEN
-%token LE GE NE AND OR
-%token '=' '<' '>'
-%left '&' '|' 
-%left '+' '-'
-%left '*' '/' '%' 
+%token <Str> identifier
+%token <Number> number 
+%token <empty> LEX_ERROR
+%token <empty> THEN
+%token <empty> LE GE NE AND OR
+%token <empty> '=' '<' '>'
+%left <empty> '&' '|' 
+%left <empty> '+' '-'
+%left <empty> '*' '/' '%' 
 /*%left <empty> '^' UMINUS*/
 
-%token <str> identifier
-%token <f> number 
-%token<rule> rule
-%token<pred> predicate
-%token<preds> predicate_list
-%token<act> action
+%start any_rule
+%type <Rul> rule
+%type <Pred> predicate
+%type <Preds> predicate_list
+%type <Act> action
+
+
 %%
+
+any_rule:
+  rule
+  {
+    SetParseTree(yylex, $1)
+  }
+
 rule: 
   predicate_list THEN action
   {
-    $$ = MakeRule($1, $3)
+    MakeAction($1, $3)
   }
 
 predicate_list: 
@@ -63,7 +71,11 @@ predicate_list:
 predicate:
   value compare value
   {
+    $$ = MakePredicate()
   }
+
+action:
+  identifier '=' value { $$ = MakeAction()}
     
 
 value:
@@ -72,17 +84,8 @@ value:
 
 compare:
   '<'
-  {
-  }
 | '>'
-  {
-  }
 | LE
-  {
-  }
 | GE
-  {
-  }
 | NE
-  {
-  }
+

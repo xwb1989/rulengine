@@ -4,9 +4,9 @@ MAKEFLAGS = -s
 	#go tool yacc -o expr.go expr.y
    # gofmt -w expr.go
 
-calc.go: calc.y
-	go tool yacc -o calc.go calc.y
-	gofmt -w calc.go
+expr.go: expr.y
+	go tool yacc -o expr.go expr.y
+	gofmt -w expr.go
 
 
 clean:

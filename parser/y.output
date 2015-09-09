@@ -1,0 +1,175 @@
+
+state 0
+	$accept: .any_rule $end 
+
+	identifier  shift 6
+	number  shift 7
+	.  error
+
+	any_rule  goto 1
+	rule  goto 2
+	predicate  goto 4
+	predicate_list  goto 3
+	value  goto 5
+
+state 1
+	$accept:  any_rule.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	any_rule:  rule.    (1)
+
+	.  reduce 1 (src line 49)
+
+
+state 3
+	rule:  predicate_list.THEN action 
+	predicate_list:  predicate_list.AND predicate 
+
+	THEN  shift 8
+	AND  shift 9
+	.  error
+
+
+state 4
+	predicate_list:  predicate.    (3)
+
+	.  reduce 3 (src line 61)
+
+
+state 5
+	predicate:  value.compare value 
+
+	LE  shift 13
+	GE  shift 14
+	NE  shift 15
+	'<'  shift 11
+	'>'  shift 12
+	.  error
+
+	compare  goto 10
+
+state 6
+	value:  identifier.    (7)
+
+	.  reduce 7 (src line 81)
+
+
+state 7
+	value:  number.    (8)
+
+	.  reduce 8 (src line 83)
+
+
+state 8
+	rule:  predicate_list THEN.action 
+
+	identifier  shift 17
+	.  error
+
+	action  goto 16
+
+state 9
+	predicate_list:  predicate_list AND.predicate 
+
+	identifier  shift 6
+	number  shift 7
+	.  error
+
+	predicate  goto 18
+	value  goto 5
+
+state 10
+	predicate:  value compare.value 
+
+	identifier  shift 6
+	number  shift 7
+	.  error
+
+	value  goto 19
+
+state 11
+	compare:  '<'.    (9)
+
+	.  reduce 9 (src line 85)
+
+
+state 12
+	compare:  '>'.    (10)
+
+	.  reduce 10 (src line 87)
+
+
+state 13
+	compare:  LE.    (11)
+
+	.  reduce 11 (src line 88)
+
+
+state 14
+	compare:  GE.    (12)
+
+	.  reduce 12 (src line 89)
+
+
+state 15
+	compare:  NE.    (13)
+
+	.  reduce 13 (src line 90)
+
+
+state 16
+	rule:  predicate_list THEN action.    (2)
+
+	.  reduce 2 (src line 55)
+
+
+state 17
+	action:  identifier.'=' value 
+
+	'='  shift 20
+	.  error
+
+
+state 18
+	predicate_list:  predicate_list AND predicate.    (4)
+
+	.  reduce 4 (src line 66)
+
+
+state 19
+	predicate:  value compare value.    (5)
+
+	.  reduce 5 (src line 71)
+
+
+state 20
+	action:  identifier '='.value 
+
+	identifier  shift 6
+	number  shift 7
+	.  error
+
+	value  goto 21
+
+state 21
+	action:  identifier '=' value.    (6)
+
+	.  reduce 6 (src line 77)
+
+
+22 terminals, 8 nonterminals
+14 grammar rules, 22/2000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+57 working sets used
+memory: parser 10/30000
+2 extra closures
+17 shift entries, 1 exceptions
+10 goto entries
+1 entries saved by goto default
+Optimizer space used: output 22/30000
+22 table entries, 1 zero
+maximum spread: 15, maximum offset: 20
