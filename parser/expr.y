@@ -15,26 +15,29 @@ func ForceEOF(yylex interface{}) {
 %}
 
 %union {
-  empty         struct{}
   Rul           *Rule
   Pred          *Predicate
   Preds         []*Predicate
   Act           *Action
   Str           string
   Number        float64
+  BooleanFn     BoolFn
+  PredFunc      PredicateFunc
+  ActFunc       ActionFunc
+  Value         func(data interface{}) interface{} 
 }
 /*
 Tokens include: number, &&, ->, identifier, >, <, >=, <=, ==, =
 */
 %token <Str> identifier
 %token <Number> number 
-%token <empty> LEX_ERROR
-%token <empty> THEN
-%token <empty> LE GE NE AND OR
-%token <empty> '=' '<' '>'
-%left <empty> '&' '|' 
-%left <empty> '+' '-'
-%left <empty> '*' '/' '%' 
+%token LEX_ERROR
+%token THEN AND
+%token <BooleanFn> LE GE NE EQ LT GT '<' '>'
+%token '=' 
+%left '&' '|' 
+%left '+' '-'
+%left '*' '/' '%' 
 /*%left <empty> '^' UMINUS*/
 
 %start any_rule
@@ -42,7 +45,10 @@ Tokens include: number, &&, ->, identifier, >, <, >=, <=, ==, =
 %type <Pred> predicate
 %type <Preds> predicate_list
 %type <Act> action
-
+%type <BooleanFn> compare
+%type <PredFunc> predicateFunc
+%type <ActFunc> actionFunc
+%type <Value> value
 
 %%
 
@@ -69,23 +75,60 @@ predicate_list:
   }
 
 predicate:
+  predicateFunc 
+  {
+    $$ = MakePredicate(yytext, $1)
+  }
+predicateFunc:
   value compare value
   {
-    $$ = MakePredicate()
+    $$ = func(data interface{}) bool { return $2($1, $3) }
   }
 
 action:
-  identifier '=' value { $$ = MakeAction()}
-    
+  actionFunc
+  { 
+    $$ = MakeAction(yytext, $1)
+  }
+
+actionFunc:
+  identifier '=' value
+  {
+    $$ = func(data interface{}) interface{} { setValue(data, $1, $3); return data }
+  }
 
 value:
-  identifier
+  identifier 
+  {
+    $$ = func(data interface{}) interface{} { return getValue(data, $1) }
+  }
 | number
+  {
+    $$ = func(data interface{}) interface{} { return $1 }
+  }
 
 compare:
-  '<'
-| '>'
-| LE
-| GE
+  '<' 
+  { 
+    $$ = ltFn 
+  }
+| '>' 
+  { 
+    $$ = gtFn 
+  }
+| LE  
+  { 
+    $$ = leFn 
+  } 
+| GE  
+  { 
+    $$ = geFn
+  }
 | NE
-
+  {
+    $$ = neFn 
+  }
+| EQ
+  {
+    $$ = eqFn
+  }

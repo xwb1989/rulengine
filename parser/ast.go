@@ -75,27 +75,36 @@ func MakeRule(preds []*Predicate, act *Action) *Rule {
 	return &Rule{Predicates: preds, Action: act}
 }
 
-func lt(a int, b int) bool {
-	return a < b
+/**
+some functions
+*/
+
+type BoolFn func(interface{}, interface{}) bool
+
+func ltFn(a interface{}, b interface{}) bool {
+	return a.(float64) < b.(float64)
 }
 
-func le(a int, b int) bool {
-	return a <= b
+func gtFn(a interface{}, b interface{}) bool {
+	return a.(float64) > b.(float64)
 }
 
-func eq(a interface{}, b interface{}) bool {
+func leFn(a interface{}, b interface{}) bool {
+	return a.(float64) <= b.(float64)
+}
+
+func geFn(a interface{}, b interface{}) bool {
+	return a.(float64) >= b.(float64)
+}
+
+func eqFn(a interface{}, b interface{}) bool {
 	return a == b
+}
+
+func neFn(a interface{}, b interface{}) bool {
+	return a != b
 }
 
 /**
 we have lazy evaluation...
 */
-type BoolFn func() bool
-
-func and(a BoolFn, b BoolFn) bool {
-	return a() && b()
-}
-
-func or(a BoolFn, b BoolFn) bool {
-	return a() || b()
-}
