@@ -1,30 +1,30 @@
 %{
 package parser
 
-import "bytes"
+import "github.com/xwb1989/rulengine/dfa"
 
-func SetParseTree(yylex interface{}, rule *Rule) {
-  yylex.(*Lexer).ParseTree = rule
+func SetParseTree(yylex interface{}, rule *dfa.Rule) {
+  yylex.(*lexer).ParseTree = rule
 }
 
 func ForceEOF(yylex interface{}) {
-  yylex.(*Lexer).ForceEOF = true
+  yylex.(*lexer).ForceEOF = true
 }
 
 
 %}
 
 %union {
-  Rul           *Rule
-  Pred          *Predicate
-  Preds         []*Predicate
-  Act           *Action
-  Str           string
-  Number        float64
-  BooleanFn     BoolFn
-  PredFunc      PredicateFunc
-  ActFunc       ActionFunc
-  Value         func(data interface{}) interface{} 
+  Rul                   *dfa.Rule
+  Predicate             *dfa.Predicate
+  Predicates            []*dfa.Predicate
+  Action                *dfa.Action
+  Str                   string
+  Number                float64
+  BoolFn                dfa.BoolFn
+  PredFn                dfa.PredicateFn
+  ActFn                 dfa.ActionFn
+  Value                 func(data interface{}) interface{} 
 }
 /*
 Tokens include: number, &&, ->, identifier, >, <, >=, <=, ==, =
@@ -42,12 +42,12 @@ Tokens include: number, &&, ->, identifier, >, <, >=, <=, ==, =
 
 %start any_rule
 %type <Rul> rule
-%type <Pred> predicate
-%type <Preds> predicate_list
-%type <Act> action
-%type <BooleanFn> compare
-%type <PredFunc> predicateFunc
-%type <ActFunc> actionFunc
+%type <Predicate> predicate
+%type <Predicates> predicate_list
+%type <Action> action
+%type <BoolFn> compare
+%type <PredFn> predicateFunc
+%type <ActFn> actionFunc
 %type <Value> value
 
 %%
@@ -61,7 +61,7 @@ any_rule:
 rule: 
   predicate_list THEN action
   {
-    MakeAction($1, $3)
+    dfa.MakeAction($1, $3)
   }
 
 predicate_list: 
@@ -77,7 +77,7 @@ predicate_list:
 predicate:
   predicateFunc 
   {
-    $$ = MakePredicate(yytext, $1)
+    $$ = dfa.MakePredicate(yytext, $1)
   }
 predicateFunc:
   value compare value
@@ -88,7 +88,7 @@ predicateFunc:
 action:
   actionFunc
   { 
-    $$ = MakeAction(yytext, $1)
+    $$ = dfa.MakeAction(yytext, $1)
   }
 
 actionFunc:
