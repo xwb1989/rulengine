@@ -1,67 +1,134 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
-const EOFCHAR = 0x100
-
-type StateFn func(*Lexer) StateFn
-type TokenType uint8
-type Token struct {
-	Type  TokenType
-	Value string
-}
+type itemType uint8
 
 const (
-	TokenNumber     TokenType = iota //numbers
-	TokenIdentifier                  //identifiers
-	TokenOperator                    //operators, like >, <
-	TokenString                      //quoted strings
+	itemError itemType = iota //numbers
+	itemEOF
+	itemIdentifier
+	itemKeyword
+	itemThen
+	itemAnd
 )
 
-// Tokenizer is the struct used to generate SQL
-// tokens for the parser.
-type Lexer struct {
-	InStream  *strings.Reader
-	lastChar  uint16
-	Name      string
-	Position  int
-	Start     int
-	Width     int
-	ParseTree Rule
+type item struct {
+	typ itemType
+	pos int
+	val string
 }
 
-func stateStart(lex *Lexer) StateFn {
+func (i item) String() string {
+	switch {
+	case i.typ == itemEOF:
+		return "EOF"
+	case i.typ == itemError:
+		return i.val
+	case i.typ > itemKeyword:
+		return fmt.Sprintf("<%s>", i.val)
+	}
+	return fmt.Sprintf("%q", i.val)
+}
+
+const eof = -1
+
+type stateFn func(*Lexer) stateFn
+
+type Lexer struct {
+	name    string
+	input   string
+	state   stateFn
+	pos     int
+	start   int
+	width   int
+	lastPos int
+	items   chan item
+}
+
+func (l *Lexer) next() rune {
+	if l.pos >= len(l.input) {
+		l.width = 0
+		return eof
+	}
+	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
+	l.width = w
+	l.pos += l.width
+	return r
+}
+
+func (l *Lexer) peek() rune {
+	r := l.next()
+	l.backup()
+	return r
+}
+
+func (l *Lexer) backup() {
+	l.pos -= l.width
+}
+
+func (l *Lexer) emit(t itemType) {
+	l.items <- item{t, l.start, l.input[l.start:l.pos]}
+	l.start = l.pos
+}
+
+func (l *Lexer) ignore() {
+	l.start = l.pos
+}
+
+func (l *Lexer) accept(valid string) bool {
+	if strings.IndexRune(valid, l.next()) >= 0 {
+		return true
+	}
+	l.backup()
+	return false
+}
+
+func (l *Lexer) acceptRun(valid string) {
+	for strings.IndexRune(valid, l.next()) >= 0 {
+	}
+	l.backup()
+}
+
+func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
+	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
 
-func (self *Lexer) skipBlank() {
-	ch := self.lastChar
-	for ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t' {
-		self.next()
-		ch = self.lastChar
+func (l *Lexer) nextItem() item {
+	item := <-l.items
+	l.lastPos = item.pos
+	return item
+}
+
+func (l *Lexer) drain() {
+	for range l.items {
 	}
 }
 
-func (self *Lexer) next() {
-	if ch, err := self.InStream.ReadByte(); err != nil {
-		// Only EOF is possible.
-		self.lastChar = EOFCHAR
-	} else {
-		self.lastChar = uint16(ch)
+func lex(name, input string) *Lexer {
+	l := &lexer{
+		name:  name,
+		input: input,
+		items: make(chan item),
 	}
-	self.Position++
+	go l.run()
+	return l
 }
 
-func NewStringLexer(expr string) *Lexer {
-	return &Lexer{InStream: strings.NewReader(expr)}
-}
-
-func (self *Lexer) Run() {
+func (l *Lexer) run() {
 	for state := stateStart; state != nil; {
-		state(self)
+		state = state(l)
 	}
+	close(l.items)
+}
+
+func stateStart(l *Lexer) stateFn {
+	return nil
 }
 
 // Lex returns the next token form the Tokenizer.
