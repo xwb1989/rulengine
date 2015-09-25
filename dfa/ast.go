@@ -4,73 +4,86 @@ import (
 	"hash/fnv"
 )
 
-type PredicateFunc func(interface{}) bool
-type ActionFunc func(interface{}) interface{}
+// PredicateFn a function that represents the logic of a Predicate
+type PredicateFn func(interface{}) bool
+
+// ActionFn a function that represents the logic of an Action
+type ActionFn func(interface{}) interface{}
 
 type exprBase struct {
 	id   uint64
 	expr string
 }
 
+// Node a node in ast
 type Node interface {
 	Hash() uint64
 	String() string
 }
 
-func (self *exprBase) String() string {
-	return self.expr
+// String() return string representation of this expression
+func (expr *exprBase) String() string {
+	return expr.expr
 }
 
-func (self *exprBase) Hash() uint64 {
-	return self.id
+func (expr *exprBase) Hash() uint64 {
+	return expr.id
 }
 
-func (self *exprBase) Equals(other Node) bool {
-	if self == other {
+func (expr *exprBase) Equals(other Node) bool {
+	if expr == other {
 		return true
-	} else if self == nil || other == nil {
+	} else if expr == nil || other == nil {
 		return false
 	}
-	return self.Hash() == other.Hash() && self.String() == other.String()
+	return expr.Hash() == other.Hash() && expr.String() == other.String()
 }
 
-func MakeExprBase(expr string) exprBase {
+func makeExprBase(expr string) exprBase {
 	h := fnv.New64a()
 	h.Write([]byte(expr))
 	return exprBase{id: h.Sum64(), expr: expr}
 }
 
+// Predicate a predicate
 type Predicate struct {
 	exprBase
-	functor PredicateFunc
+	functor PredicateFn
 }
 
-func MakePredicate(expr string, functor PredicateFunc) *Predicate {
-	return &Predicate{exprBase: MakeExprBase(expr), functor: functor}
+// MakePredicate create a predicate
+func MakePredicate(expr string, functor PredicateFn) *Predicate {
+	return &Predicate{exprBase: makeExprBase(expr), functor: functor}
 }
 
-func (self *Predicate) IsTrue(data interface{}) bool {
-	return self.functor(data)
+// IsTrue given data, return whether the predicate evaluates to true
+func (expr *Predicate) IsTrue(data interface{}) bool {
+	return expr.functor(data)
 }
 
+// Action an action
 type Action struct {
 	exprBase
-	functor ActionFunc
+	functor ActionFn
 }
 
-func MakeAction(expr string, functor ActionFunc) *Action {
-	return &Action{exprBase: MakeExprBase(expr), functor: functor}
+// MakeAction create an Action
+func MakeAction(expr string, functor ActionFn) *Action {
+	return &Action{exprBase: makeExprBase(expr), functor: functor}
 }
 
-func (self *Action) Apply(val interface{}) interface{} {
-	return self.functor(val)
+// Apply apply the action
+func (expr *Action) Apply(val interface{}) interface{} {
+	return expr.functor(val)
 }
 
+// Rule a rule
 type Rule struct {
 	Predicates []*Predicate
 	Action     *Action
 }
 
+// MakeRule create a rule
 func MakeRule(preds []*Predicate, act *Action) *Rule {
 	return &Rule{Predicates: preds, Action: act}
 }
@@ -79,29 +92,36 @@ func MakeRule(preds []*Predicate, act *Action) *Rule {
 some functions
 */
 
+// BoolFn functions that return bool
 type BoolFn func(interface{}, interface{}) bool
 
-func ltFn(a interface{}, b interface{}) bool {
+// LtFn compare a and b
+func LtFn(a interface{}, b interface{}) bool {
 	return a.(float64) < b.(float64)
 }
 
-func gtFn(a interface{}, b interface{}) bool {
+// GtFn compare a and b
+func GtFn(a interface{}, b interface{}) bool {
 	return a.(float64) > b.(float64)
 }
 
-func leFn(a interface{}, b interface{}) bool {
+// LeFn compare a and b
+func LeFn(a interface{}, b interface{}) bool {
 	return a.(float64) <= b.(float64)
 }
 
-func geFn(a interface{}, b interface{}) bool {
+// GeFn compare a and b
+func GeFn(a interface{}, b interface{}) bool {
 	return a.(float64) >= b.(float64)
 }
 
-func eqFn(a interface{}, b interface{}) bool {
+// EqFn compare a and b
+func EqFn(a interface{}, b interface{}) bool {
 	return a == b
 }
 
-func neFn(a interface{}, b interface{}) bool {
+// NeFn compare a and b
+func NeFn(a interface{}, b interface{}) bool {
 	return a != b
 }
 
