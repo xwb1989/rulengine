@@ -127,16 +127,30 @@ func (l *Lexer) run() {
 	close(l.items)
 }
 
+// States...
 func stateStart(l *Lexer) stateFn {
 	return nil
 }
 
 // Lex returns the next token form the Tokenizer.
-// This function is used by go yacc.
+// This function is called by go yacc.
 func (self *Lexer) Lex(lval *yySymType) int {
 	return 0
 }
 
 // Error is called by go yacc if there's a parsing error.
 func (self *Lexer) Error(err string) {
+}
+
+// Helper functions
+func isSpace(r rune) bool {
+	return r == ' ' || r == '\t'
+}
+
+func isEndOfLine(r rune) bool {
+	return r == '\r' || r == '\n'
+}
+
+func isAlphaNumeric(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
