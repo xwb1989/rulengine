@@ -2,27 +2,30 @@ package dfa
 
 import (
 	"fmt"
-	"github.com/oleiade/lane"
-	. "github.com/xwb1989/rulengine/parser"
 	"log"
+
+	"github.com/oleiade/lane"
 )
 
+// DFA the DFA
 type DFA struct {
-	start *State
+	start *state
 }
 
+// MakeDFA create a DFA by given a set of rules
 func MakeDFA(rules []*Rule) DFA {
 	start := createMinimalDFA(rules)
 	return DFA{start: start}
 }
 
-func (self *DFA) GetAction(data interface{}) *Action {
-	prev := self.start
+// GetAction by given data, traverse the DFA rule space and return an Action
+func (d *DFA) GetAction(data interface{}) *Action {
+	prev := d.start
 	found := []*Action{}
 	i := 0
-	for curr := prev.FindNext(data); curr != nil; curr = curr.FindNext(data) {
-		if prev.FindNext(data) != curr {
-			fmt.Println("prev.FindNext(val)=", prev.FindNext(data), " curr=", curr)
+	for curr := prev.findNext(data); curr != nil; curr = curr.findNext(data) {
+		if prev.findNext(data) != curr {
+			fmt.Println("prev.findNext(val)=", prev.findNext(data), " curr=", curr)
 			panic("wrong!!!")
 		}
 		if curr.Action != nil {
@@ -33,19 +36,19 @@ func (self *DFA) GetAction(data interface{}) *Action {
 	}
 	if len(found) != 0 {
 		return found[len(found)-1]
-	} else {
-		return nil
 	}
+	return nil
 }
 
-func (self *DFA) Size() int {
+// Size size of this DFA
+func (d *DFA) Size() int {
 	stack := lane.NewStack()
-	visited := map[*State]bool{}
-	stack.Push(self.start)
-	visited[self.start] = true
+	visited := map[*state]bool{}
+	stack.Push(d.start)
+	visited[d.start] = true
 	cnt := 0
 	for !stack.Empty() {
-		curr := stack.Pop().(*State)
+		curr := stack.Pop().(*state)
 		cnt++
 		for _, v := range curr.edges {
 			if _, ok := visited[v]; !ok {
@@ -57,15 +60,16 @@ func (self *DFA) Size() int {
 	return cnt
 }
 
-func (self *DFA) Debug() {
+// Debug output debug information about this DFA
+func (d *DFA) Debug() {
 	stack := lane.NewStack()
-	visited := map[*State]bool{}
-	stack.Push(self.start)
-	visited[self.start] = true
+	visited := map[*state]bool{}
+	stack.Push(d.start)
+	visited[d.start] = true
 	cnt := 0
 	log.Println("DFA Debug:")
 	for !stack.Empty() {
-		curr := stack.Pop().(*State)
+		curr := stack.Pop().(*state)
 		log.Printf("\n%p:\n%v\n\n", curr, curr)
 		cnt++
 		for _, v := range curr.edges {
@@ -80,13 +84,13 @@ func (self *DFA) Debug() {
 
 //Implements algorithm in paper: Incremental construction of minimal acyclic finite-state automata
 //Predicates in each rule must be sorted in a consistent order
-func createMinimalDFA(rules []*Rule) *State {
-	start := InitState()
+func createMinimalDFA(rules []*Rule) *state {
+	start := initState()
 	start.IsRegistered = false
-	reg := MakeRegister()
-	reg.GetOrPut(start)
+	reg := makeRegistry()
+	reg.getOrPut(start)
 	//this must be called before state is modified
-	unRegister := func(state *State) {
+	unRegister := func(state *state) {
 		if state != start && state.IsRegistered {
 			if !reg.Remove(state) {
 				log.Panic("fail to unregister state:", state)
@@ -96,13 +100,13 @@ func createMinimalDFA(rules []*Rule) *State {
 		}
 	}
 	for _, rule := range rules {
-		path := make([]*State, len(rule.Predicates)+1)
+		path := make([]*state, len(rule.Predicates)+1)
 		path[0] = start
 		prev := start
 		for i, pred := range rule.Predicates {
 			curr := prev.Next(pred)
 			if curr == nil {
-				curr = InitState()
+				curr = initState()
 				unRegister(prev)
 				prev.SetNext(pred, curr)
 			} else if curr.IsConfluent() {
@@ -126,14 +130,14 @@ func createMinimalDFA(rules []*Rule) *State {
 
 		//traverse back the path
 		for i := len(rule.Predicates) - 1; i >= 0; i-- {
-			in_path := path[i+1]
-			in_reg := reg.GetOrPut(in_path)
-			if in_path != in_reg { //fail to register
-				prev_in_path := path[i]
-				unRegister(prev_in_path)
-				prev_in_path.SetNext(rule.Predicates[i], in_reg)
+			inPath := path[i+1]
+			inReg := reg.getOrPut(inPath)
+			if inPath != inReg { //fail to register
+				prevInPath := path[i]
+				unRegister(prevInPath)
+				prevInPath.SetNext(rule.Predicates[i], inReg)
 			} else {
-				in_path.IsRegistered = true
+				inPath.IsRegistered = true
 			}
 		}
 	}

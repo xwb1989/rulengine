@@ -4,13 +4,12 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/xwb1989/rulengine/parser"
 )
 
-func TestStateBasic(t *testing.T) {
+func TeststateBasic(t *testing.T) {
 	Convey("create two initial states", t, func() {
-		s1 := InitState()
-		s2 := InitState()
+		s1 := initState()
+		s2 := initState()
 		Convey("they should be equivalent", func() {
 			So(s1.Equals(s2), ShouldBeTrue)
 			So(s1.Equals(s1), ShouldBeTrue)
@@ -21,7 +20,7 @@ func TestStateBasic(t *testing.T) {
 			So(s1.Equals(s2), ShouldBeFalse)
 		})
 		Convey("modify both thus they have same edges, then they should be equivalent", func() {
-			s3 := InitState()
+			s3 := initState()
 			s1.SetNext(pred, s3)
 			s2.SetNext(pred, s3)
 			So(s1.Equals(s2), ShouldBeTrue)

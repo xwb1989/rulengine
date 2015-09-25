@@ -1,27 +1,26 @@
 package dfa
 
 import (
-	. "github.com/xwb1989/rulengine/parser"
 	"math"
 )
 
-type State struct {
+type state struct {
 	IsRegistered bool
-	Action       *Action //if not nil, it's an accept self
-	edges        map[*Predicate]*State
+	Action       *Action //if not nil, it's an accept s
+	edges        map[*Predicate]*state
 	inCount      int
 }
 
-func MakeState(isRegistered bool, edges map[*Predicate]*State, action *Action) *State {
-	return &State{IsRegistered: isRegistered, edges: edges, Action: action}
+func makestate(isRegistered bool, edges map[*Predicate]*state, action *Action) *state {
+	return &state{IsRegistered: isRegistered, edges: edges, Action: action}
 }
-func InitState() *State {
-	return MakeState(false, make(map[*Predicate]*State), nil)
+func initState() *state {
+	return makestate(false, make(map[*Predicate]*state), nil)
 }
 
-func (self *State) FindNext(data interface{}) *State {
-	var ret *State = nil
-	for predicate, v := range self.edges {
+func (s *state) findNext(data interface{}) *state {
+	var ret *state
+	for predicate, v := range s.edges {
 		if predicate.IsTrue(data) {
 			if ret != nil {
 				panic("work on multiple predicate")
@@ -32,52 +31,52 @@ func (self *State) FindNext(data interface{}) *State {
 	return ret
 }
 
-func (self *State) Next(pred *Predicate) *State {
-	if self, ok := self.edges[pred]; ok {
-		return self
+func (s *state) Next(pred *Predicate) *state {
+	if s, ok := s.edges[pred]; ok {
+		return s
 	}
 	return nil
 }
 
-func (self *State) Hit() {
-	self.inCount++
+func (s *state) Hit() {
+	s.inCount++
 }
 
-func (self *State) Unhit() {
-	self.inCount--
+func (s *state) Unhit() {
+	s.inCount--
 }
 
-func (self *State) IsConfluent() bool {
-	return self.inCount > 1
+func (s *state) IsConfluent() bool {
+	return s.inCount > 1
 }
 
-func (self *State) SetNext(pred *Predicate, next *State) {
-	if oldNext, ok := self.edges[pred]; ok {
+func (s *state) SetNext(pred *Predicate, next *state) {
+	if oldNext, ok := s.edges[pred]; ok {
 		oldNext.Unhit()
 	}
 	next.Hit()
-	self.edges[pred] = next
+	s.edges[pred] = next
 }
 
-func (self *State) Clone() *State {
-	cloned := InitState()
-	cloned.Action = self.Action
-	for k, v := range self.edges {
+func (s *state) Clone() *state {
+	cloned := initState()
+	cloned.Action = s.Action
+	for k, v := range s.edges {
 		cloned.edges[k] = v
 		v.Hit()
 	}
 	return cloned
 }
 
-func (self *State) Equals(other *State) bool {
-	if self == other {
+func (s *state) Equals(other *state) bool {
+	if s == other {
 		return true
 	}
 	//need to make sure for same expressions we only create one Action instance
-	if len(self.edges) != len(self.edges) || self.Action != other.Action {
+	if len(s.edges) != len(s.edges) || s.Action != other.Action {
 		return false
 	}
-	for k, v := range self.edges {
+	for k, v := range s.edges {
 		//need to make sure that for same expressions we only creates one Predicate instance
 		if v != other.edges[k] {
 			return false
@@ -86,12 +85,12 @@ func (self *State) Equals(other *State) bool {
 	return true
 }
 
-func (self *State) Hash() uint64 {
-	var sum uint64 = 0
-	if self.Action != nil {
-		sum = self.Action.Hash()
+func (s *state) Hash() uint64 {
+	var sum uint64
+	if s.Action != nil {
+		sum = s.Action.Hash()
 	}
-	for k, v := range self.edges {
+	for k, v := range s.edges {
 		sum += k.Hash() + v.Hash()
 		sum %= math.MaxUint64
 	}

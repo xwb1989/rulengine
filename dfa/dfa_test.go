@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/xwb1989/rulengine/parser"
 	"math/rand"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDFA(t *testing.T) {
@@ -94,10 +94,10 @@ func WordsToRules(words []string, isMin bool) []*Rule {
 	return rules
 }
 
-var pred_map map[string]*Predicate = make(map[string]*Predicate)
-var act_map map[string]*Action = make(map[string]*Action)
+var predMap = make(map[string]*Predicate)
+var actMap = make(map[string]*Action)
 
-//a tiny parser
+//a tiny
 func wordToRule(w string, isMin bool) *Rule {
 	preds := []*Predicate{}
 	for i := 0; i < len(w); i++ {
@@ -107,7 +107,7 @@ func wordToRule(w string, isMin bool) *Rule {
 		} else {
 			expr = fmt.Sprintf("d[%v]==%v", i, string(w[i]))
 		}
-		pred, ok := pred_map[expr]
+		pred, ok := predMap[expr]
 
 		if !ok {
 			j := i
@@ -119,17 +119,17 @@ func wordToRule(w string, isMin bool) *Rule {
 				return word[j] == w[j]
 			}
 			pred = MakePredicate(expr, predFunc)
-			pred_map[expr] = pred
+			predMap[expr] = pred
 		}
 		preds = append(preds, pred)
 	}
 	actFunc := func(data interface{}) interface{} {
 		return "accept"
 	}
-	act, ok := act_map["accept"]
+	act, ok := actMap["accept"]
 	if !ok {
 		act = MakeAction("accept", actFunc)
-		act_map["accept"] = act
+		actMap["accept"] = act
 	}
 	rule := MakeRule(preds, act)
 	return rule

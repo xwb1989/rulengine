@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -37,9 +38,9 @@ func (i item) String() string {
 
 const eof = -1
 
-type stateFn func(*Lexer) stateFn
+type stateFn func(*lexer) stateFn
 
-type Lexer struct {
+type lexer struct {
 	name    string
 	input   string
 	state   stateFn
@@ -50,7 +51,7 @@ type Lexer struct {
 	items   chan item
 }
 
-func (l *Lexer) next() rune {
+func (l *lexer) next() rune {
 	if l.pos >= len(l.input) {
 		l.width = 0
 		return eof
@@ -61,26 +62,26 @@ func (l *Lexer) next() rune {
 	return r
 }
 
-func (l *Lexer) peek() rune {
+func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
 }
 
-func (l *Lexer) backup() {
+func (l *lexer) backup() {
 	l.pos -= l.width
 }
 
-func (l *Lexer) emit(t itemType) {
+func (l *lexer) emit(t itemType) {
 	l.items <- item{t, l.start, l.input[l.start:l.pos]}
 	l.start = l.pos
 }
 
-func (l *Lexer) ignore() {
+func (l *lexer) ignore() {
 	l.start = l.pos
 }
 
-func (l *Lexer) accept(valid string) bool {
+func (l *lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
 	}
@@ -88,29 +89,29 @@ func (l *Lexer) accept(valid string) bool {
 	return false
 }
 
-func (l *Lexer) acceptRun(valid string) {
+func (l *lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
 	}
 	l.backup()
 }
 
-func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
+func (l *lexer) errorf(format string, args ...interface{}) stateFn {
 	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
 
-func (l *Lexer) nextItem() item {
+func (l *lexer) nextItem() item {
 	item := <-l.items
 	l.lastPos = item.pos
 	return item
 }
 
-func (l *Lexer) drain() {
+func (l *lexer) drain() {
 	for range l.items {
 	}
 }
 
-func lex(name, input string) *Lexer {
+func lex(name, input string) *lexer {
 	l := &lexer{
 		name:  name,
 		input: input,
@@ -120,7 +121,7 @@ func lex(name, input string) *Lexer {
 	return l
 }
 
-func (l *Lexer) run() {
+func (l *lexer) run() {
 	for state := stateStart; state != nil; {
 		state = state(l)
 	}
@@ -128,18 +129,18 @@ func (l *Lexer) run() {
 }
 
 // States...
-func stateStart(l *Lexer) stateFn {
+func stateStart(l *lexer) stateFn {
 	return nil
 }
 
 // Lex returns the next token form the Tokenizer.
 // This function is called by go yacc.
-func (self *Lexer) Lex(lval *yySymType) int {
-	return 0
-}
+//func (lexer *lexer) Lex(lval *yySymType) int {
+//return 0
+//}
 
 // Error is called by go yacc if there's a parsing error.
-func (self *Lexer) Error(err string) {
+func (l *lexer) Error(err string) {
 }
 
 // Helper functions
